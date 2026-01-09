@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Redirecting...</title>
+  <title>User Profile Data</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -12,47 +12,76 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
       color: #333;
+      padding: 20px;
+      box-sizing: border-box;
     }
 
-    /* การ์ดแสดงข้อมูล */
     .card {
       background: white;
-      padding: 30px;
-      border-radius: 15px;
+      padding: 25px;
+      border-radius: 12px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
       text-align: center;
-      max-width: 80%;
-      width: 300px;
-      display: none; /* ซ่อนไว้ก่อน รอโหลดเสร็จค่อยโชว์ */
+      display: none; /* ซ่อนก่อน รอโหลด */
       flex-direction: column;
       align-items: center;
     }
 
-    /* รูปโปรไฟล์ */
     .avatar {
-      width: 100px;
-      height: 100px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      border: 4px solid #00B900; /* ขอบสีเขียว LINE */
+      border: 3px solid #00B900;
       object-fit: cover;
       margin-bottom: 15px;
     }
 
-    h2 { margin: 0 0 10px 0; font-size: 20px; }
-    p { margin: 5px 0; color: #666; font-size: 14px; }
+    /* ตารางแสดงข้อมูล */
+    .info-table {
+      width: 100%;
+      text-align: left;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-size: 13px;
+    }
+    .info-table th {
+      background-color: #f9f9f9;
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      width: 35%;
+      color: #555;
+    }
+    .info-table td {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      word-break: break-all; /* ตัดคำถ้ายาวเกิน */
+      font-family: monospace; /* ให้ดูเป็นโค้ด */
+      color: #000;
+    }
 
-    /* ตัวโหลดหมุนๆ */
     .loader {
-      border: 5px solid #e0e0e0;
-      border-top: 5px solid #00B900;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #00B900;
       border-radius: 50%;
       width: 40px;
       height: 40px;
       animation: spin 1s linear infinite;
-      margin-bottom: 20px;
+    }
+
+    .countdown-box {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      border-radius: 8px;
+      font-weight: bold;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -60,78 +89,99 @@
 </head>
 <body>
 
-  <div id="loading-screen" style="text-align: center;">
-    <div class="loader" style="margin: 0 auto 15px;"></div>
-    <p>กำลังโหลดข้อมูล...</p>
+  <div id="loading-screen">
+    <div class="loader"></div>
+    <p style="margin-top:10px; color:#666;">กำลังดึงข้อมูล...</p>
   </div>
 
   <div id="profile-card" class="card">
-    <img id="user-img" class="avatar" src="https://via.placeholder.com/100" alt="Profile">
-    <h2 id="user-name">Guest</h2>
-    <p>กำลังพาคุณไปยังลิงก์ปลายทาง...</p>
-    <p style="color: #00B900; font-weight: bold; font-size: 18px;">
-      ในอีก <span id="countdown">5</span> วินาที
+    <img id="user-img" class="avatar" src="" alt="No Image">
+    <h3 id="user-name" style="margin:0;">-</h3>
+    
+    <table class="info-table">
+      <tr>
+        <th>User ID</th>
+        <td id="data-userid">-</td>
+      </tr>
+      <tr>
+        <th>Display Name</th>
+        <td id="data-displayname">-</td>
+      </tr>
+      <tr>
+        <th>Status Msg</th>
+        <td id="data-status">-</td>
+      </tr>
+      <tr>
+        <th>OS</th>
+        <td id="data-os">-</td>
+      </tr>
+      <tr>
+        <th>Language</th>
+        <td id="data-lang">-</td>
+      </tr>
+    </table>
+
+    <div class="countdown-box">
+      กำลังเปลี่ยนหน้าใน <span id="countdown" style="font-size:1.2em;">5</span> วินาที
+    </div>
+    
+    <p style="font-size:11px; color:#999; margin-top:10px;">
+      Target: <span id="target-url-text">...</span>
     </p>
   </div>
 
   <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
-  
   <script>
-    // --- ตั้งค่า LIFF ID ของคุณที่นี่ ---
-    const MY_LIFF_ID = "1655725335-HvHozKEr"; 
+    const MY_LIFF_ID = "1655725335-HvHozKEr"; // <-- ใส่ LIFF ID ของคุณ
 
     function runApp() {
       const queryString = window.location.search;
       const urlParams = new URLSearchParams(queryString);
       const targetUrl = urlParams.get('target');
 
-      // ดึงข้อมูลโปรไฟล์
+      // ดึงข้อมูล Profile
       liff.getProfile().then(profile => {
-        // --- 1. อัปเดตหน้าจอ UI ---
-        const profileCard = document.getElementById("profile-card");
-        const loadingScreen = document.getElementById("loading-screen");
-        const userImg = document.getElementById("user-img");
-        const userName = document.getElementById("user-name");
+        
+        // 1. นำข้อมูลใส่ลงใน HTML
+        document.getElementById("user-img").src = profile.pictureUrl || "https://via.placeholder.com/80";
+        document.getElementById("user-name").innerText = profile.displayName;
+        
+        // ข้อมูลดิบ
+        document.getElementById("data-userid").innerText = profile.userId;
+        document.getElementById("data-displayname").innerText = profile.displayName;
+        document.getElementById("data-status").innerText = profile.statusMessage || "(ไม่มีสถานะ)";
+        
+        // ข้อมูลจาก liff context (อุปกรณ์/ภาษา)
+        document.getElementById("data-os").innerText = liff.getOS(); 
+        document.getElementById("data-lang").innerText = liff.getLanguage();
+        
+        document.getElementById("target-url-text").innerText = targetUrl || "None";
 
-        // ใส่ข้อมูลจริงลงใน HTML
-        userName.innerText = profile.displayName;
-        if(profile.pictureUrl) {
-          userImg.src = profile.pictureUrl;
-        }
+        // 2. แสดงผลหน้าจอ
+        document.getElementById("loading-screen").style.display = "none";
+        document.getElementById("profile-card").style.display = "flex";
 
-        // สลับหน้าจอ: ซ่อนตัวโหลด -> โชว์การ์ดข้อมูล
-        loadingScreen.style.display = "none";
-        profileCard.style.display = "flex";
-
-        // --- 2. Logic การ Redirect ---
+        // 3. เริ่มนับถอยหลัง Redirect
         if (targetUrl) {
-          // เริ่มนับถอยหลัง 5 วินาที
           let timeLeft = 5;
           const countdownEl = document.getElementById("countdown");
           
           const timer = setInterval(() => {
             timeLeft--;
             countdownEl.innerText = timeLeft;
-
             if (timeLeft <= 0) {
               clearInterval(timer);
-              window.location.replace(targetUrl); // ไปยังลิงก์ปลายทาง
+              window.location.replace(targetUrl);
             }
           }, 1000);
-
-        } else {
-          // กรณีไม่มีลิงก์
-          document.body.innerHTML = "<h3>ไม่พบลิงก์ปลายทาง (No Target URL)</h3>";
         }
 
       }).catch(err => {
-        console.error(err);
-        // กรณี Error ให้ Redirect เลยเพื่อไม่ให้ค้าง
-        if(targetUrl) window.location.replace(targetUrl);
+        console.error("LIFF Error:", err);
+        alert("เกิดข้อผิดพลาด: " + err); // แสดง error ให้เห็นถ้ามีปัญหา
       });
     }
 
-    // เริ่มต้น LIFF
     liff.init({ liffId: MY_LIFF_ID }, () => {
       if (liff.isLoggedIn()) {
         runApp();
