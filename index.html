@@ -2,98 +2,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Debug Profile</title>
+  <title>Redirecting...</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; text-align: center; }
-    img { border-radius: 50%; width: 100px; margin-bottom: 10px; }
-    .error-box { color: red; background: #ffe6e6; padding: 10px; border: 1px solid red; margin-top: 20px; text-align: left;}
-    .info-box { background: #f0f0f0; padding: 15px; border-radius: 8px; text-align: left; }
-    #timer { font-size: 2em; color: green; font-weight: bold; }
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #00B900; /* สีเขียว LINE */
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-
-  <h2>User Profile Debug</h2>
   
-  <div id="profileArea" style="display:none;">
-    <img id="pictureUrl" src="">
-    <div class="info-box">
-      <p><b>ID:</b> <span id="userId"></span></p>
-      <p><b>Name:</b> <span id="displayName"></span></p>
-      <p><b>Email:</b> <span id="email"></span></p>
-      <p><b>Target:</b> <span id="targetUrl"></span></p>
-    </div>
-    <br>
-    <p>Redirecting in <span id="timer">3</span>...</p>
-  </div>
-
-  <p id="status">กำลังโหลด LIFF...</p>
-  <div id="errorLog" class="error-box" style="display:none;"></div>
+  <div class="loader"></div>
+  <p>กำลังพาคุณไปยังหน้ารายละเอียด...</p>
+  <p id="debug" style="font-size: 10px; color: gray;"></p>
 
   <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
   <script>
-    // ฟังก์ชันสำหรับปริ้น Error ออกหน้าจอ
-    function showError(msg) {
-      document.getElementById("status").style.display = 'none';
-      const errBox = document.getElementById("errorLog");
-      errBox.style.display = 'block';
-      errBox.innerHTML += "Example: " + msg + "<br>";
-    }
-
-    // 1. รับค่า Params
-    const urlParams = new URLSearchParams(window.location.search);
-    const targetParam = urlParams.get('target');
-    if (targetParam) localStorage.setItem('savedTarget', targetParam);
-
     function runApp() {
-      const targetUrl = localStorage.getItem('savedTarget');
-      document.getElementById("targetUrl").innerText = targetUrl || "ไม่มี";
+      // 1. ดึงค่า Parameter ที่ต้องการใช้เป็นปลายทาง (สมมติชื่อตัวแปรว่า 'target')
+      const queryString = window.location.search;
+      const urlParams = new URLSearchParams(queryString);
+      const targetUrl = urlParams.get('target'); // รอรับค่า ?target=...
 
-      // 2. ดึง Profile
       liff.getProfile().then(profile => {
-        document.getElementById("status").style.display = 'none';
-        document.getElementById("profileArea").style.display = 'block';
+        // --------------------------------------------------------
+        // จุดสำหรับใส่โค้ดบันทึกข้อมูลลงฐานข้อมูล (Tracking)
+        // เช่นส่ง profile.userId และ targetUrl ไปที่ API ของคุณ
+        // console.log("User:", profile.userId, "Click:", targetUrl);
+        // --------------------------------------------------------
 
-        document.getElementById("pictureUrl").src = profile.pictureUrl;
-        document.getElementById("userId").innerText = profile.userId;
-        document.getElementById("displayName").innerText = profile.displayName;
-
-        // 3. ดึง Email
-        const idToken = liff.getDecodedIDToken();
-        if (idToken && idToken.email) {
-            document.getElementById("email").innerText = idToken.email;
-        } else {
-            document.getElementById("email").innerText = "ไม่ได้รับอนุญาต (Check Scopes)";
-            document.getElementById("email").style.color = "orange";
-        }
-
-        // 4. Redirect
+        // 2. ตรวจสอบและ Redirect
         if (targetUrl) {
-          let timeLeft = 3;
-          setInterval(() => {
-            timeLeft--;
-            document.getElementById("timer").innerText = timeLeft;
-            if (timeLeft <= 0) {
-               localStorage.removeItem('savedTarget');
-               window.location.replace(targetUrl);
-            }
-          }, 1000);
+          document.getElementById("debug").innerText = "Redirecting to: " + targetUrl;
+          
+          // หน่วงเวลานิดนึงเพื่อให้ JS ทำงานเสร็จ (หรือเอาออกถ้าต้องการความเร็วสูงสุด)
+          setTimeout(() => {
+            // สั่งเปลี่ยนหน้าเว็บทันที
+            window.location.replace(targetUrl); 
+          }, 1000); 
+          
+        } else {
+          // กรณีไม่มี Link ปลายทางแนบมา
+          document.querySelector(".loader").style.display = "none";
+          document.body.innerHTML = "<h3>ไม่พบลิงก์ปลายทาง (Target URL not found)</h3>";
         }
-
+        
       }).catch(err => {
-        showError("GetProfile Error: " + err.code + " - " + err.message);
+        console.error(err);
+        // กรณี Error ก็ให้ Redirect ไปหน้าเว็บหลักแทน (กันลูกค้าค้าง)
+        if(targetUrl) window.location.replace(targetUrl);
       });
     }
 
-    liff.init({ liffId: "1655725335-HvHozKEr" }).then(() => {
+    liff.init({ liffId: "1655725335-HvHozKEr" }, () => {
       if (liff.isLoggedIn()) {
         runApp();
       } else {
-        liff.login();
+        // login และส่ง param เดิมกลับมาด้วย
+        liff.login({ redirectUri: window.location.href });
       }
-    }).catch(err => {
-      showError("LIFF Init Error: " + err.code + " - " + err.message);
-    });
+    }, err => console.error(err));
   </script>
 </body>
 </html>
