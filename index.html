@@ -2,96 +2,166 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Redirecting...</title>
+  <title>User Profile & Redirect</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: 'Sarabun', sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
       text-align: center;
+      background-color: #f8f9fa;
+      padding: 20px;
     }
+    
+    /* สไตล์สำหรับรูปโปรไฟล์ */
+    #pictureUrl {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 4px solid #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+      display: none; /* ซ่อนไว้ก่อนโหลดเสร็จ */
+    }
+
+    .profile-info {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      width: 100%;
+      max-width: 320px;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    
+    .profile-info p {
+      margin: 8px 0;
+      font-size: 14px;
+      word-wrap: break-word; /* กันข้อความยาวทะลุกรอบ */
+      color: #333;
+    }
+
+    .status-box {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #e8f5e9;
+      border-radius: 8px;
+      border: 1px solid #c8e6c9;
+      color: #2e7d32;
+    }
+
     .loader {
       border: 4px solid #f3f3f3;
       border-top: 4px solid #00B900;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 30px;
+      height: 30px;
       animation: spin 1s linear infinite;
-      margin-bottom: 15px;
+      margin: 0 auto 10px auto;
     }
-    #timer { font-weight: bold; color: #00B900; font-size: 1.5em; }
-    #debug { color: red; font-size: 12px; margin-top: 20px;}
+
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    #targetParamDisplay { color: #007bff; font-weight: bold; }
+    #timer { font-weight: bold; color: #d32f2f; font-size: 1.2em; }
   </style>
 </head>
 <body>
-  
-  <div class="loader"></div>
-  <p>กำลังดำเนินการ...</p>
-  <p>รอสักครู่ <span id="timer">3</span> วินาที</p>
-  
-  <p id="debug"></p>
+
+  <div class="loader" id="loader"></div>
+  <h3 id="statusText">กำลังโหลดข้อมูล...</h3>
+
+  <img id="pictureUrl" alt="Profile Picture">
+
+  <div class="profile-info" id="profileCard" style="display:none;">
+    <p id="userId"></p>
+    <p id="displayName"></p>
+    <p id="statusMessage"></p>
+    <p id="email"></p>
+    <hr>
+    <p><b>Target URL:</b> <br><span id="targetParamDisplay">...</span></p>
+  </div>
+
+  <div class="status-box" id="redirectBox" style="display:none;">
+    กำลังพาไปยังลิงก์ปลายทางใน <span id="timer">3</span> วินาที...
+  </div>
 
   <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
   <script>
-    // 1. ตรวจสอบ Parameter ตั้งแต่เปิดหน้าเว็บทันที (ก่อน LIFF Init)
+    // 1. ดักจับ Parameter และฝากไว้ในเครื่องทันที (กันค่าหายหลัง Login)
     const urlParams = new URLSearchParams(window.location.search);
     const targetParam = urlParams.get('target');
-
-    // ถ้ามีค่า target มาใหม่ ให้บันทึกลง Memory เครื่องทันที
     if (targetParam) {
       localStorage.setItem('savedTarget', targetParam);
     }
 
     function runApp() {
-      // 2. ดึงค่าจาก Memory มาใช้งาน (แทนการดึงจาก URL โดยตรง)
+      // 2. ดึงค่า URL ปลายทางที่ฝากไว้
       const targetUrl = localStorage.getItem('savedTarget');
       
-      // แสดงค่าบนหน้าจอเพื่อ Debug (ลบออกได้เมื่อใช้งานจริง)
-       document.getElementById("debug").innerText = "Destination: " + targetUrl;
+      // แสดงค่า Target URL บนหน้าจอ (ถ้ามี)
+      const displayUrl = targetUrl ? targetUrl : "ไม่พบลิงก์ปลายทาง";
+      document.getElementById("targetParamDisplay").innerText = displayUrl;
 
+      // 3. ดึง Profile จาก LINE
       liff.getProfile().then(profile => {
-        // --- (จุดเก็บข้อมูลลง Database) ---
-         console.log("User:", profile.userId, "Target:", targetUrl);
-        // --------------------------------
+        // ซ่อน Loading
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("statusText").style.display = "none";
+
+        // แสดง Card ข้อมูล
+        document.getElementById("profileCard").style.display = "block";
+        document.getElementById("pictureUrl").style.display = "block";
         
+        // เติมข้อมูลลงใน HTML
+        document.getElementById("pictureUrl").src = profile.pictureUrl || ""; // กันกรณีไม่มีรูป
+        document.getElementById("userId").innerHTML = '<b>UserID:</b> ' + profile.userId;
+        document.getElementById("displayName").innerHTML = '<b>Name:</b> ' + profile.displayName;
+        document.getElementById("statusMessage").innerHTML = '<b>Status:</b> ' + (profile.statusMessage || "-");
+
+        // ดึง Email (ต้องขอ Permission ใน Console ก่อนนะครับ ถึงจะขึ้น)
+        const idToken = liff.getDecodedIDToken();
+        document.getElementById("email").innerHTML = '<b>Email:</b> ' + (idToken && idToken.email ? idToken.email : "Not Allowed");
+
+        // 4. เริ่มกระบวนการ Redirect (ถ้ามีลิงก์ปลายทาง)
         if (targetUrl) {
+          document.getElementById("redirectBox").style.display = "block";
+          
           let timeLeft = 3;
           const timerElement = document.getElementById("timer");
 
+          // นับถอยหลัง
           const countdown = setInterval(() => {
             timeLeft--;
             timerElement.innerText = timeLeft;
             if (timeLeft <= 0) clearInterval(countdown);
           }, 1000);
 
+          // สั่งย้ายหน้าเมื่อครบ 3 วินาที
           setTimeout(() => {
-            // ล้างค่าทิ้งก่อนไป เพื่อไม่ให้จำค่าเดิมค้างไว้ครั้งหน้า
+            // ล้างค่าทิ้ง (Optional: ลบหรือไม่ลบก็ได้ แล้วแต่ Use case)
             localStorage.removeItem('savedTarget'); 
-            
-            // Redirect ไปยังปลายทาง
             window.location.replace(targetUrl);
           }, 3000);
-          
-        } else {
-          document.querySelector(".loader").style.display = "none";
-          document.getElementById("debug").innerText = "Error: ไม่พบลิงก์ปลายทาง (Target not found)";
         }
+
       }).catch(err => {
         console.error(err);
+        document.getElementById("statusText").innerText = "เกิดข้อผิดพลาด: " + err.message;
       });
     }
 
+    // เริ่มต้น LIFF
     liff.init({ liffId: "1655725335-HvHozKEr" }, () => {
       if (liff.isLoggedIn()) {
         runApp();
       } else {
-        // Login โดยไม่ต้องกังวลเรื่อง Parameter แล้ว เพราะเรา Save ลง localStorage ไปแล้วบรรทัดบนสุด
-        liff.login(); 
+        liff.login();
       }
     }, err => console.error(err));
   </script>
