@@ -2,98 +2,170 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Data & Email</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Redirecting</title>
   <style>
+    /* --- Apple Aesthetic CSS --- */
+    :root {
+      --bg-color: #f5f5f7; /* สีพื้นหลังเทาอ่อนแบบ Apple */
+      --card-bg: #ffffff;
+      --text-primary: #1d1d1f; /* สีดำเกือบสนิท */
+      --text-secondary: #86868b; /* สีเทาสำหรับ Label */
+      --accent-color: #007aff; /* สีฟ้า Apple */
+      --divider-color: #e5e5e5;
+    }
+
     body {
-      font-family: monospace;
-      background-color: #1a1a1a; /* สีพื้นหลังดำเทา */
-      color: #00ff00; /* สีเขียวสไตล์ Terminal */
+      /* ใช้ Font stack ของระบบ เพื่อความ Native (San Francisco, Helvetica etc.) */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
+      justify-content: center;
+      min-height: 100vh;
       margin: 0;
-    }
-
-    .version-tag {
-      position: absolute;
-      top: 5px;
-      left: 5px;
-      background: #007bff; /* ป้ายสีฟ้า */
-      color: white;
-      padding: 3px 6px;
-      font-size: 10px;
-      border-radius: 3px;
-      font-family: sans-serif;
-    }
-
-    .card {
-      background: #2d2d2d;
       padding: 20px;
-      border-radius: 10px;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased; /* ทำให้ฟอนต์คมชัดบน Mac/iOS */
+    }
+
+    /* คอนเทนเนอร์หลัก */
+    main.container {
+      background: var(--card-bg);
       width: 100%;
-      max-width: 400px; /* ขยายกว้างขึ้นหน่อยเผื่อ Email ยาว */
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-      margin-top: 30px;
-      border: 1px solid #444;
-    }
-
-    img.avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      border: 2px solid #00ff00;
-      display: block;
-      margin: 0 auto 15px;
-    }
-
-    h3 { text-align: center; color: #fff; margin: 0 0 20px 0; }
-
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th { text-align: left; color: #aaa; padding: 8px 5px; border-bottom: 1px solid #444; width: 30%; }
-    td { text-align: right; color: #fff; padding: 8px 5px; border-bottom: 1px solid #444; word-break: break-all; }
-
-    /* ไฮไลท์แถว Email */
-    .row-email td { color: #ffeb3b; font-weight: bold; }
-
-    .countdown {
+      max-width: 360px; /* ไม่กว้างเกินไป */
+      border-radius: 24px; /* ขอบมนมาก */
+      /* เงาฟุ้งๆ นุ่มๆ */
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+      padding: 40px 30px;
       text-align: center;
-      font-size: 18px;
-      margin-top: 25px;
-      color: #fff;
-      background: #333;
-      padding: 10px;
-      border-radius: 5px;
+      /* ซ่อนก่อน รอโหลดข้อมูลเสร็จค่อยโชว์ */
+      opacity: 0; 
+      transform: translateY(20px);
+      transition: opacity 0.4s ease-out, transform 0.4s ease-out;
     }
-    .countdown span { color: #ff0000; font-weight: bold; font-size: 22px; }
+
+    /* แสดงผลเมื่อพร้อม */
+    main.container.loaded {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* รูปโปรไฟล์ */
+    .avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 20px;
+      /* เงาเล็กน้อยให้รูปลอยขึ้นมา */
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background-color: #f0f0f0; /* สีพื้นหลังถ้ารูปโหลดไม่ติด */
+    }
+
+    /* ชื่อผู้ใช้ */
+    h1.user-name {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 30px 0;
+      letter-spacing: -0.5px;
+    }
+
+    /* ส่วนแสดงข้อมูล List */
+    .data-list {
+      text-align: left;
+      margin-bottom: 35px;
+    }
+
+    .data-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--divider-color);
+      font-size: 15px;
+    }
+
+    .data-item:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      color: var(--text-secondary);
+      font-weight: 400;
+      flex-shrink: 0; /* ไม่ให้ label หด */
+      margin-right: 15px;
+    }
+
+    .value {
+      font-weight: 500;
+      text-align: right;
+      /* จัดการกับข้อความยาวๆ เช่น Email */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 65%; /* จำกัดความกว้างไม่ให้ล้น */
+    }
+    /* เน้น Email สีฟ้า */
+    .value.email { color: var(--accent-color); }
+
+    /* ส่วนนับถอยหลัง */
+    .redirect-info {
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+    .timer-count {
+      color: var(--accent-color);
+      font-weight: 700;
+      font-size: 20px;
+    }
+
+    /* Loading spinner แบบเรียบๆ */
+    .loading-state {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--text-secondary);
+    }
   </style>
 </head>
 <body>
 
-  <div class="version-tag">VER: WITH EMAIL</div>
+  <div id="loading" class="loading-state">Loading...</div>
 
-  <div class="card">
-    <img id="u-img" class="avatar" src="">
-    <h3 id="u-name">Loading...</h3>
+  <main id="main-card" class="container">
+    <img id="u-img" class="avatar" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Profile">
+    <h1 id="u-name" class="user-name">...</h1>
 
-    <table>
-      <tr><th>User ID</th><td id="u-id">...</td></tr>
-      <tr class="row-email"><th>Email</th><td id="u-email">...</td></tr> <tr><th>Status</th><td id="u-status">...</td></tr>
-      <tr><th>OS</th><td id="u-os">...</td></tr>
-      <tr><th>Lang</th><td id="u-lang">...</td></tr>
-    </table>
-
-    <div class="countdown">
-      Redirect in <span id="timer">5</span> s
+    <div class="data-list">
+      <div class="data-item">
+        <span class="label">Email</span>
+        <span id="u-email" class="value email">Checking...</span>
+      </div>
+      <div class="data-item">
+        <span class="label">User ID</span>
+        <span id="u-id" class="value" title="">...</span>
+      </div>
+      <div class="data-item">
+        <span class="label">Status</span>
+        <span id="u-status" class="value">...</span>
+      </div>
+      <div class="data-item">
+        <span class="label">Device</span>
+        <span id="u-device" class="value">...</span>
+      </div>
     </div>
-  </div>
 
-  <p id="debug-log" style="font-size:10px; color:gray; margin-top:20px; text-align:center;"></p>
+    <div class="redirect-info">
+      Redirecting in <span id="timer" class="timer-count">5</span> seconds
+    </div>
+  </main>
 
   <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
   <script>
-    // --- อย่าลืมใส่ LIFF ID ของคุณ ---
+    // --- ใส่ LIFF ID ของคุณที่นี่ ---
     const MY_LIFF_ID = "1655725335-HvHozKEr"; 
 
     function runApp() {
@@ -101,26 +173,39 @@
       const targetUrl = urlParams.get('target');
 
       liff.getProfile().then(profile => {
-        // 1. ดึงข้อมูล User Profile ปกติ
-        document.getElementById("u-img").src = profile.pictureUrl || "https://via.placeholder.com/80";
+        // --- 1. Populate Data to UI ---
+        const mainCard = document.getElementById("main-card");
+        const loading = document.getElementById("loading");
+
+        // Basic Profile
+        document.getElementById("u-img").src = profile.pictureUrl || "https://via.placeholder.com/96/f0f0f0/cccccc?text=No+Image";
         document.getElementById("u-name").innerText = profile.displayName;
-        document.getElementById("u-id").innerText = profile.userId;
-        document.getElementById("u-status").innerText = profile.statusMessage || "-";
         
-        // 2. ดึง Email จาก ID Token **(จุดสำคัญ)**
+        const userIdEl = document.getElementById("u-id");
+        userIdEl.innerText = profile.userId;
+        userIdEl.title = profile.userId; // tooltip for long ID
+
+        document.getElementById("u-status").innerText = profile.statusMessage || "-";
+
+        // Email (Requires 'email' scope in Console)
         const idToken = liff.getDecodedIDToken();
+        const emailEl = document.getElementById("u-email");
         if (idToken && idToken.email) {
-            document.getElementById("u-email").innerText = idToken.email;
+            emailEl.innerText = idToken.email;
+            emailEl.title = idToken.email;
         } else {
-            document.getElementById("u-email").innerText = "No Permission / Not Found";
-            // ถ้าขึ้นข้อความนี้ แสดงว่ายังไม่ได้เปิด Scope Email ใน Console หรือ User ไม่กดอนุญาต
+            emailEl.innerText = "Not Available";
+            emailEl.style.color = "#999"; // สีเทาถ้าไม่มี
         }
 
-        // 3. ข้อมูล Device
-        document.getElementById("u-os").innerText = liff.getOS();
-        document.getElementById("u-lang").innerText = liff.getLanguage();
+        // Device Info
+        document.getElementById("u-device").innerText = `${liff.getOS()} (${liff.getLanguage()})`;
 
-        // 4. Countdown Redirect
+        // Show Card with animation
+        loading.style.display = "none";
+        mainCard.classList.add("loaded");
+
+        // --- 2. Countdown & Redirect ---
         if (targetUrl) {
           let count = 10;
           const timerEl = document.getElementById("timer");
@@ -129,27 +214,30 @@
             timerEl.innerText = count;
             if (count <= 0) {
               clearInterval(interval);
+              // Redirect
               window.location.replace(targetUrl);
             }
           }, 1000);
         } else {
-          document.getElementById("debug-log").innerText = "Warning: No target URL provided.";
+           document.querySelector(".redirect-info").innerHTML = "<span style='color:red'>No Target URL found.</span>";
         }
 
       }).catch(err => {
-        document.getElementById("u-name").innerText = "Error!";
-        document.getElementById("debug-log").innerText = err;
+        console.error(err);
+        document.getElementById("loading").innerText = "Error loading profile.";
       });
     }
 
+    // Initialize LIFF
     liff.init({ liffId: MY_LIFF_ID }, () => {
       if (liff.isLoggedIn()) {
         runApp();
       } else {
-        // ตอน Login ต้องขอ Scope เพิ่มด้วย (แต่ถ้าตั้งใน Console แล้ว ปกติจะ auto)
         liff.login({ redirectUri: window.location.href });
       }
-    }, err => alert("Init Error: " + err));
+    }, err => {
+        alert("LIFF Init Failed: " + err);
+    });
   </script>
 </body>
 </html>
