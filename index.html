@@ -52,11 +52,11 @@
       const targetUrl = localStorage.getItem('savedTarget');
       
       // แสดงค่าบนหน้าจอเพื่อ Debug (ลบออกได้เมื่อใช้งานจริง)
-      // document.getElementById("debug").innerText = "Destination: " + targetUrl;
+       document.getElementById("debug").innerText = "Destination: " + targetUrl;
 
       liff.getProfile().then(profile => {
         // --- (จุดเก็บข้อมูลลง Database) ---
-        // console.log("User:", profile.userId, "Target:", targetUrl);
+         console.log("User:", profile.userId, "Target:", targetUrl);
         // --------------------------------
         
         if (targetUrl) {
