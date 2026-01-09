@@ -114,4 +114,87 @@
         <span id="u-lang" class="value">...</span>
       </div>
       <div class="data-item">
-        <span class="
+        <span class="label">LIFF Ver.</span>
+        <span id="u-version" class="value">...</span>
+      </div>
+    </div>
+
+    <div class="footer-info">
+      Redirecting in <span id="timer" class="timer">5</span> s
+    </div>
+  </main>
+
+  <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
+  <script>
+    const MY_LIFF_ID = "1655725335-HvHozKEr"; // ใส่ LIFF ID ของคุณ
+
+    function runApp() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetUrl = urlParams.get('target');
+
+      liff.getProfile().then(profile => {
+        // 1. ใส่ข้อมูล Profile พื้นฐาน
+        document.getElementById("u-img").src = profile.pictureUrl || "https://via.placeholder.com/88";
+        document.getElementById("u-name").innerText = profile.displayName;
+        document.getElementById("u-status").innerText = profile.statusMessage || "(No status message)";
+        document.getElementById("u-id").innerText = profile.userId;
+
+        // 2. ใส่ข้อมูล System / OS / Version
+        const os = liff.getOS(); // ios, android, web
+        const lang = liff.getLanguage(); // th, en-US
+        const ver = liff.getVersion(); // liff sdk version
+        const client = liff.isInClient() ? "In App" : "External";
+
+        document.getElementById("u-os").innerText = `${os} (${client})`;
+        document.getElementById("u-lang").innerText = lang;
+        document.getElementById("u-version").innerText = ver;
+
+        // 3. ใส่ข้อมูล Email (ต้องเปิด Scope 'email' ใน Console)
+        const idToken = liff.getDecodedIDToken();
+        const emailEl = document.getElementById("u-email");
+        if (idToken && idToken.email) {
+          emailEl.innerText = idToken.email;
+        } else {
+          emailEl.innerText = "N/A";
+          emailEl.style.color = "#999";
+        }
+
+        // 4. แสดงผล (ปิด Loader -> เปิด Card)
+        document.getElementById("full-loader").style.display = "none";
+        document.getElementById("main-card").style.display = "block";
+
+        // 5. นับถอยหลัง Redirect
+        if (targetUrl) {
+          let count = 5;
+          const timerEl = document.getElementById("timer");
+          const interval = setInterval(() => {
+            count--;
+            timerEl.innerText = count;
+            if (count <= 0) {
+              clearInterval(interval);
+              window.location.replace(targetUrl);
+            }
+          }, 1000);
+        } else {
+           document.querySelector(".footer-info").innerHTML = "<span style='color:red'>Target URL not found</span>";
+        }
+
+      }).catch(err => {
+        console.error(err);
+        alert("Error Loading Profile: " + err);
+      });
+    }
+
+    // --- Auto Login Logic ---
+    liff.init({ liffId: MY_LIFF_ID }).then(() => {
+      if (!liff.isLoggedIn()) {
+        liff.login({ redirectUri: window.location.href });
+      } else {
+        runApp();
+      }
+    }).catch(err => {
+      document.body.innerHTML = "<h3>LIFF Init Failed</h3><p>" + err + "</p>";
+    });
+  </script>
+</body>
+</html>
