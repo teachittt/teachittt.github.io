@@ -2,66 +2,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My LIFF v2 With Params</title>
+  <title>Redirecting in 5s...</title>
   <style>
-    #pictureUrl { display: block; margin: 0 auto }
-    /* เพิ่มสไตล์ให้ดูง่ายขึ้น */
-    body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
-    p { margin: 5px 0; }
+    body {
+      font-family: 'Sarabun', sans-serif; /* แนะนำให้ใช้ font ที่อ่านง่าย */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+      background-color: #f8f9fa;
+    }
+    .loader {
+      border: 5px solid #e0e0e0;
+      border-top: 5px solid #00B900;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    h2 { margin-bottom: 5px; color: #333; }
+    p { color: #666; }
+    #timer {
+      font-weight: bold;
+      color: #00B900;
+      font-size: 1.2em;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <img id="pictureUrl" width="25%">
-  <p id="userId"></p>
-  <p id="displayName"></p>
-  <p id="statusMessage"></p>
-  <p id="getDecodedIDToken"></p>
   
-  <hr>
-  <h3>URL Parameters:</h3>
-  <p id="paramData" style="color: blue;"></p>
+  <div class="loader"></div>
+  <h2>กำลังบันทึกข้อมูล...</h2>
+  <p>ระบบจะพาคุณไปยังหน้าปลายทางในอีก <span id="timer">5</span> วินาที</p>
+  <p id="debug" style="font-size: 12px; color: #999; margin-top: 20px;"></p>
 
   <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
   <script>
     function runApp() {
-      // 1. ส่วนเดิม: ดึง Profile
-      liff.getProfile().then(profile => {
-        document.getElementById("pictureUrl").src = profile.pictureUrl;
-        document.getElementById("userId").innerHTML = '<b>UserId:</b> ' + profile.userId;
-        document.getElementById("displayName").innerHTML = '<b>DisplayName:</b> ' + profile.displayName;
-        document.getElementById("statusMessage").innerHTML = '<b>StatusMessage:</b> ' + profile.statusMessage;
-        
-        const idToken = liff.getDecodedIDToken();
-        document.getElementById("getDecodedIDToken").innerHTML = '<b>Email:</b> ' + (idToken ? idToken.email : 'Not allow');
-      }).catch(err => console.error(err));
-
-      // 2. ส่วนใหม่: ดึง Parameter จาก URL มาใช้งาน
+      // 1. รับค่าปลายทาง
       const queryString = window.location.search;
       const urlParams = new URLSearchParams(queryString);
-      
-      // ตัวอย่างการดึงค่ามาแสดงผลทั้งหมด
-      let paramResult = "";
-      if (Array.from(urlParams).length > 0) {
-          urlParams.forEach((value, key) => {
-              paramResult += `<b>${key}:</b> ${value}<br>`;
-              
-              // ตัวอย่าง: ถ้าคุณอยากเอาค่าไปใช้ต่อ เช่น save ลง database
-              console.log(`Key: ${key}, Value: ${value}`);
-          });
-      } else {
-          paramResult = "ไม่พบ Parameter";
-      }
-      document.getElementById("paramData").innerHTML = paramResult;
+      const targetUrl = urlParams.get('target');
+
+      liff.getProfile().then(profile => {
+        // --- พื้นที่สำหรับใส่โค้ดบันทึกข้อมูล (ถ้ามี) ---
+        // console.log("Profile:", profile);
+        // ----------------------------------------
+
+        if (targetUrl) {
+          document.getElementById("debug").innerText = "Destination: " + targetUrl;
+          
+          // ตัวแปรสำหรับนับเวลา
+          let timeLeft = 5;
+          const timerElement = document.getElementById("timer");
+
+          // ฟังก์ชันนับถอยหลังตัวเลขบนหน้าจอ
+          const countdown = setInterval(() => {
+            timeLeft--;
+            timerElement.innerText = timeLeft;
+            
+            if (timeLeft <= 0) {
+              clearInterval(countdown);
+            }
+          }, 1000); // ทำงานทุกๆ 1 วินาที
+
+          // คำสั่ง Redirect เมื่อครบ 5 วินาที
+          setTimeout(() => {
+            window.location.replace(targetUrl);
+          }, 5000); 
+          
+        } else {
+          document.querySelector(".loader").style.display = "none";
+          document.body.innerHTML = "<h3>ไม่พบลิงก์ปลายทาง (Target URL Missing)</h3>";
+        }
+        
+      }).catch(err => {
+        console.error(err);
+      });
     }
 
     liff.init({ liffId: "1655725335-HvHozKEr" }, () => {
       if (liff.isLoggedIn()) {
         runApp();
       } else {
-        // [จุดสำคัญ] บังคับให้ Redirect กลับมาที่หน้าเดิมพร้อม Parameter ทั้งหมด
         liff.login({ redirectUri: window.location.href });
       }
-    }, err => console.error(err.code, err.message));
+    }, err => console.error(err));
   </script>
 </body>
 </html>
