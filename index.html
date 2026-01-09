@@ -34,38 +34,38 @@
 
   <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
   <script>
-    function runApp() {
-      // 1. ดึงค่า Parameter ที่ต้องการใช้เป็นปลายทาง (สมมติชื่อตัวแปรว่า 'target')
+function runApp() {
       const queryString = window.location.search;
       const urlParams = new URLSearchParams(queryString);
-      const targetUrl = urlParams.get('target'); // รอรับค่า ?target=...
+      const targetUrl = urlParams.get('target');
 
       liff.getProfile().then(profile => {
         // --------------------------------------------------------
-        // จุดสำหรับใส่โค้ดบันทึกข้อมูลลงฐานข้อมูล (Tracking)
-        // เช่นส่ง profile.userId และ targetUrl ไปที่ API ของคุณ
-        // console.log("User:", profile.userId, "Click:", targetUrl);
+        // (จุดสำหรับยิง API เก็บข้อมูล Tracking ของคุณ)
         // --------------------------------------------------------
 
-        // 2. ตรวจสอบและ Redirect
         if (targetUrl) {
-          document.getElementById("debug").innerText = "Redirecting to: " + targetUrl;
+          // 1. แสดงข้อมูลผู้ใช้และลิงก์ปลายทางให้เห็นบนหน้าจอ
+          document.getElementById("debug").innerHTML = `
+            สวัสดีคุณ: <b style="color: #00B900;">${profile.displayName}</b><br>
+            กำลังพาไปที่: ${targetUrl}<br>
+            <br>
+            <i>(กำลังเปลี่ยนหน้าใน 5 วินาที...)</i>
+          `;
           
-          // หน่วงเวลานิดนึงเพื่อให้ JS ทำงานเสร็จ (หรือเอาออกถ้าต้องการความเร็วสูงสุด)
+          // 2. ปรับเวลาหน่วงเป็น 5000 มิลลิวินาที (5 วินาที)
           setTimeout(() => {
-            // สั่งเปลี่ยนหน้าเว็บทันที
             window.location.replace(targetUrl); 
-          }, 1000); 
+          }, 5000); 
           
         } else {
-          // กรณีไม่มี Link ปลายทางแนบมา
           document.querySelector(".loader").style.display = "none";
           document.body.innerHTML = "<h3>ไม่พบลิงก์ปลายทาง (Target URL not found)</h3>";
         }
         
       }).catch(err => {
         console.error(err);
-        // กรณี Error ก็ให้ Redirect ไปหน้าเว็บหลักแทน (กันลูกค้าค้าง)
+        // กรณี Error ถ้ามี target ก็ให้ไปต่อได้เลย (อาจจะหน่วงน้อยหน่อย หรือไปเลย)
         if(targetUrl) window.location.replace(targetUrl);
       });
     }
