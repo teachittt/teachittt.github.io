@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Verifying...</title>
+  <title>System Check</title>
   <style>
-    /* --- CSS Style เดิม (Apple Aesthetic) --- */
     :root {
       --bg-color: #f5f5f7;
       --card-bg: #ffffff;
@@ -29,147 +28,90 @@
       box-sizing: border-box;
     }
 
-    /* Container หลัก: เริ่มต้นให้ซ่อน (display: none) เพื่อไม่ให้เห็นแวบๆ */
+    /* Container */
     main.container {
-      display: none; 
+      display: none; /* ซ่อนก่อน รอ Auto Login เสร็จ */
       background: var(--card-bg);
       width: 100%;
-      max-width: 360px;
+      max-width: 380px;
       border-radius: 24px;
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-      padding: 40px 30px;
+      padding: 35px 25px;
       text-align: center;
       animation: fadeIn 0.5s ease-out;
     }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .avatar { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background-color: #f0f0f0; }
-    h1.user-name { font-size: 24px; font-weight: 700; margin: 0 0 30px 0; letter-spacing: -0.5px; }
+    .avatar { 
+      width: 88px; height: 88px; 
+      border-radius: 50%; object-fit: cover; 
+      margin-bottom: 15px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+      background-color: #f0f0f0; 
+    }
     
-    .data-list { text-align: left; margin-bottom: 35px; }
-    .data-item { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--divider-color); font-size: 15px; }
-    .data-item:last-child { border-bottom: none; }
-    .label { color: var(--text-secondary); margin-right: 15px; }
-    .value { font-weight: 500; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%; }
-    .value.email { color: var(--accent-color); }
+    h1.user-name { font-size: 22px; font-weight: 700; margin: 0 0 5px 0; }
+    p.status-msg { font-size: 14px; color: var(--text-secondary); margin: 0 0 25px 0; min-height: 20px; }
 
-    .redirect-info { font-size: 16px; color: var(--text-secondary); }
-    .timer-count { color: var(--accent-color); font-weight: 700; font-size: 20px; }
+    /* Data List */
+    .data-list { text-align: left; margin-bottom: 25px; border-top: 1px solid var(--divider-color); }
+    .data-item { 
+      display: flex; justify-content: space-between; align-items: center; 
+      padding: 12px 0; border-bottom: 1px solid var(--divider-color); font-size: 14px; 
+    }
+    
+    .label { color: var(--text-secondary); margin-right: 10px; }
+    .value { font-weight: 500; text-align: right; max-width: 60%; word-break: break-all; }
+    .value.highlight { color: var(--accent-color); }
 
-    /* Loading Spinner ตรงกลางจอ (แสดงตอนกำลัง Auto Login) */
+    /* Footer / Countdown */
+    .footer-info { margin-top: 20px; font-size: 14px; color: var(--text-secondary); }
+    .timer { color: var(--accent-color); font-weight: 700; font-size: 18px; }
+
+    /* Loader เต็มจอ */
     .initial-loader {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: var(--bg-color);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
       z-index: 999;
     }
     .spinner {
-      width: 40px; height: 40px;
-      border: 4px solid #ddd;
-      border-top: 4px solid var(--accent-color);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 15px;
+      width: 35px; height: 35px;
+      border: 3px solid #ddd; border-top: 3px solid var(--accent-color);
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px;
     }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
 
   <div id="full-loader" class="initial-loader">
     <div class="spinner"></div>
-    <p style="color:#86868b; font-size:14px;">Verifying...</p>
+    <p style="color:#86868b; font-size:13px;">Authenticating...</p>
   </div>
 
   <main id="main-card" class="container">
     <img id="u-img" class="avatar" src="">
     <h1 id="u-name" class="user-name">...</h1>
+    <p id="u-status" class="status-msg">...</p>
 
     <div class="data-list">
       <div class="data-item">
-        <span class="label">Email</span>
-        <span id="u-email" class="value email">...</span>
+        <span class="label">User ID</span>
+        <span id="u-id" class="value" style="font-size:12px;">...</span>
       </div>
       <div class="data-item">
-        <span class="label">User ID</span>
-        <span id="u-id" class="value">...</span>
+        <span class="label">Email</span>
+        <span id="u-email" class="value highlight">checking...</span>
       </div>
-    </div>
-
-    <div class="redirect-info">
-      Redirecting in <span id="timer" class="timer-count">5</span> seconds
-    </div>
-  </main>
-
-  <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
-  <script>
-    const MY_LIFF_ID = "1655725335-HvHozKEr"; 
-
-    // ฟังก์ชันหลักที่ทำงานเมื่อ Logged In แล้ว
-    function runApp() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const targetUrl = urlParams.get('target');
-
-      liff.getProfile().then(profile => {
-        // --- 1. แสดงข้อมูล ---
-        document.getElementById("u-img").src = profile.pictureUrl || "https://via.placeholder.com/96";
-        document.getElementById("u-name").innerText = profile.displayName;
-        document.getElementById("u-id").innerText = profile.userId;
-
-        // Email logic
-        const idToken = liff.getDecodedIDToken();
-        document.getElementById("u-email").innerText = (idToken && idToken.email) ? idToken.email : "N/A";
-
-        // --- 2. ปิด Loader -> เปิด Card ---
-        document.getElementById("full-loader").style.display = "none"; 
-        document.getElementById("main-card").style.display = "block";
-
-        // --- 3. Countdown & Redirect ---
-        if (targetUrl) {
-          let count = 5;
-          const timerEl = document.getElementById("timer");
-          const interval = setInterval(() => {
-            count--;
-            timerEl.innerText = count;
-            if (count <= 0) {
-              clearInterval(interval);
-              window.location.replace(targetUrl);
-            }
-          }, 1000);
-        } else {
-           document.querySelector(".redirect-info").innerHTML = "<span style='color:red'>No Target URL</span>";
-        }
-
-      }).catch(err => {
-        console.error(err);
-        alert("Error: " + err);
-      });
-    }
-
-    // --- ส่วน Auto Login Logic ---
-    liff.init({ liffId: MY_LIFF_ID }).then(() => {
-      
-      // เช็คว่าล็อกอินหรือยัง?
-      if (!liff.isLoggedIn()) {
-        
-        // ** ถ้ายังไม่ล็อกอิน ให้สั่ง Login ทันที (Auto) **
-        // redirectUri: ใส่ window.location.href เพื่อให้เวลากลับมา ค่า param ต่างๆ (?target=...) ยังอยู่ครบ
-        liff.login({ redirectUri: window.location.href });
-      
-      } else {
-        // ** ถ้าล็อกอินแล้ว ให้รันแอพเลย **
-        runApp();
-      }
-
-    }).catch(err => {
-      document.body.innerHTML = "<p>LIFF Init Failed.</p>";
-      console.error(err);
-    });
-  </script>
-</body>
-</html>
+      <div class="data-item">
+        <span class="label">OS / System</span>
+        <span id="u-os" class="value">...</span>
+      </div>
+      <div class="data-item">
+        <span class="label">Language</span>
+        <span id="u-lang" class="value">...</span>
+      </div>
+      <div class="data-item">
+        <span class="
