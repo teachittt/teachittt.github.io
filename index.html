@@ -1,80 +1,141 @@
-<html>
+<!DOCTYPE html>
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Redirecting...</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f0f2f5;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
-      text-align: center;
+      color: #333;
     }
-    .loader {
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #00B900; /* สีเขียว LINE */
+
+    /* การ์ดแสดงข้อมูล */
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 80%;
+      width: 300px;
+      display: none; /* ซ่อนไว้ก่อน รอโหลดเสร็จค่อยโชว์ */
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* รูปโปรไฟล์ */
+    .avatar {
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
-      width: 50px;
-      height: 50px;
+      border: 4px solid #00B900; /* ขอบสีเขียว LINE */
+      object-fit: cover;
+      margin-bottom: 15px;
+    }
+
+    h2 { margin: 0 0 10px 0; font-size: 20px; }
+    p { margin: 5px 0; color: #666; font-size: 14px; }
+
+    /* ตัวโหลดหมุนๆ */
+    .loader {
+      border: 5px solid #e0e0e0;
+      border-top: 5px solid #00B900;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
       animation: spin 1s linear infinite;
       margin-bottom: 20px;
     }
+
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  
-  <div class="loader"></div>
-  <p>กำลังพาคุณไปยังหน้ารายละเอียด...</p>
-  <p id="debug" style="font-size: 10px; color: gray;"></p>
+
+  <div id="loading-screen" style="text-align: center;">
+    <div class="loader" style="margin: 0 auto 15px;"></div>
+    <p>กำลังโหลดข้อมูล...</p>
+  </div>
+
+  <div id="profile-card" class="card">
+    <img id="user-img" class="avatar" src="https://via.placeholder.com/100" alt="Profile">
+    <h2 id="user-name">Guest</h2>
+    <p>กำลังพาคุณไปยังลิงก์ปลายทาง...</p>
+    <p style="color: #00B900; font-weight: bold; font-size: 18px;">
+      ในอีก <span id="countdown">5</span> วินาที
+    </p>
+  </div>
 
   <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
+  
   <script>
-function runApp() {
+    // --- ตั้งค่า LIFF ID ของคุณที่นี่ ---
+    const MY_LIFF_ID = "1655725335-HvHozKEr"; 
+
+    function runApp() {
       const queryString = window.location.search;
       const urlParams = new URLSearchParams(queryString);
       const targetUrl = urlParams.get('target');
 
+      // ดึงข้อมูลโปรไฟล์
       liff.getProfile().then(profile => {
-        // --------------------------------------------------------
-        // (จุดสำหรับยิง API เก็บข้อมูล Tracking ของคุณ)
-        // --------------------------------------------------------
+        // --- 1. อัปเดตหน้าจอ UI ---
+        const profileCard = document.getElementById("profile-card");
+        const loadingScreen = document.getElementById("loading-screen");
+        const userImg = document.getElementById("user-img");
+        const userName = document.getElementById("user-name");
 
-        if (targetUrl) {
-          // 1. แสดงข้อมูลผู้ใช้และลิงก์ปลายทางให้เห็นบนหน้าจอ
-          document.getElementById("debug").innerHTML = `
-            สวัสดีคุณ: <b style="color: #00B900;">${profile.displayName}</b><br>
-            กำลังพาไปที่: ${targetUrl}<br>
-            <br>
-            <i>(กำลังเปลี่ยนหน้าใน 5 วินาที...)</i>
-          `;
-          
-          // 2. ปรับเวลาหน่วงเป็น 5000 มิลลิวินาที (5 วินาที)
-          setTimeout(() => {
-            window.location.replace(targetUrl); 
-          }, 5000); 
-          
-        } else {
-          document.querySelector(".loader").style.display = "none";
-          document.body.innerHTML = "<h3>ไม่พบลิงก์ปลายทาง (Target URL not found)</h3>";
+        // ใส่ข้อมูลจริงลงใน HTML
+        userName.innerText = profile.displayName;
+        if(profile.pictureUrl) {
+          userImg.src = profile.pictureUrl;
         }
-        
+
+        // สลับหน้าจอ: ซ่อนตัวโหลด -> โชว์การ์ดข้อมูล
+        loadingScreen.style.display = "none";
+        profileCard.style.display = "flex";
+
+        // --- 2. Logic การ Redirect ---
+        if (targetUrl) {
+          // เริ่มนับถอยหลัง 5 วินาที
+          let timeLeft = 5;
+          const countdownEl = document.getElementById("countdown");
+          
+          const timer = setInterval(() => {
+            timeLeft--;
+            countdownEl.innerText = timeLeft;
+
+            if (timeLeft <= 0) {
+              clearInterval(timer);
+              window.location.replace(targetUrl); // ไปยังลิงก์ปลายทาง
+            }
+          }, 1000);
+
+        } else {
+          // กรณีไม่มีลิงก์
+          document.body.innerHTML = "<h3>ไม่พบลิงก์ปลายทาง (No Target URL)</h3>";
+        }
+
       }).catch(err => {
         console.error(err);
-        // กรณี Error ถ้ามี target ก็ให้ไปต่อได้เลย (อาจจะหน่วงน้อยหน่อย หรือไปเลย)
+        // กรณี Error ให้ Redirect เลยเพื่อไม่ให้ค้าง
         if(targetUrl) window.location.replace(targetUrl);
       });
     }
 
-    liff.init({ liffId: "1655725335-HvHozKEr" }, () => {
+    // เริ่มต้น LIFF
+    liff.init({ liffId: MY_LIFF_ID }, () => {
       if (liff.isLoggedIn()) {
         runApp();
       } else {
-        // login และส่ง param เดิมกลับมาด้วย
         liff.login({ redirectUri: window.location.href });
       }
     }, err => console.error(err));
