@@ -2,10 +2,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Redirecting in 5s...</title>
+  <title>Redirecting...</title>
   <style>
     body {
-      font-family: 'Sarabun', sans-serif; /* แนะนำให้ใช้ font ที่อ่านง่าย */
+      font-family: sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -13,76 +13,65 @@
       height: 100vh;
       margin: 0;
       text-align: center;
-      background-color: #f8f9fa;
+      background-color: #ffffff;
     }
     .loader {
-      border: 5px solid #e0e0e0;
-      border-top: 5px solid #00B900;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #00B900;
       border-radius: 50%;
-      width: 60px;
-      height: 60px;
+      width: 40px;
+      height: 40px;
       animation: spin 1s linear infinite;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
-    h2 { margin-bottom: 5px; color: #333; }
-    p { color: #666; }
-    #timer {
-      font-weight: bold;
-      color: #00B900;
-      font-size: 1.2em;
-    }
+    #timer { font-weight: bold; color: #00B900; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   
   <div class="loader"></div>
-  <h2>กำลังบันทึกข้อมูล...</h2>
-  <p>ระบบจะพาคุณไปยังหน้าปลายทางในอีก <span id="timer">5</span> วินาที</p>
-  <p id="debug" style="font-size: 12px; color: #999; margin-top: 20px;"></p>
+  <p>กำลังดำเนินการ...</p>
+  <p>รอสักครู่ <span id="timer">3</span> วินาที</p>
 
   <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
   <script>
     function runApp() {
-      // 1. รับค่าปลายทาง
+      // 1. รับค่า target จาก URL (เช่น ?target=https://google.com)
       const queryString = window.location.search;
       const urlParams = new URLSearchParams(queryString);
       const targetUrl = urlParams.get('target');
 
       liff.getProfile().then(profile => {
-        // --- พื้นที่สำหรับใส่โค้ดบันทึกข้อมูล (ถ้ามี) ---
-        // console.log("Profile:", profile);
-        // ----------------------------------------
+        // --- (จุดสำหรับใส่โค้ดเก็บข้อมูลลง Database) ---
+        // console.log("User:", profile.userId, "Target:", targetUrl);
+        // ------------------------------------------
 
         if (targetUrl) {
-          document.getElementById("debug").innerText = "Destination: " + targetUrl;
-          
-          // ตัวแปรสำหรับนับเวลา
-          let timeLeft = 5;
+          // ตั้งเวลาเริ่มต้น 3 วินาที
+          let timeLeft = 3;
           const timerElement = document.getElementById("timer");
 
-          // ฟังก์ชันนับถอยหลังตัวเลขบนหน้าจอ
+          // สร้างตัวนับถอยหลังบนหน้าจอ
           const countdown = setInterval(() => {
             timeLeft--;
             timerElement.innerText = timeLeft;
-            
-            if (timeLeft <= 0) {
-              clearInterval(countdown);
-            }
-          }, 1000); // ทำงานทุกๆ 1 วินาที
+            if (timeLeft <= 0) clearInterval(countdown);
+          }, 1000);
 
-          // คำสั่ง Redirect เมื่อครบ 5 วินาที
+          // สั่ง Redirect เมื่อครบ 3000 ms (3 วินาที)
           setTimeout(() => {
             window.location.replace(targetUrl);
-          }, 5000); 
+          }, 3000);
           
         } else {
-          document.querySelector(".loader").style.display = "none";
-          document.body.innerHTML = "<h3>ไม่พบลิงก์ปลายทาง (Target URL Missing)</h3>";
+          document.body.innerHTML = "<h3>Error: ไม่พบลิงก์ปลายทาง (?target=...)</h3>";
         }
         
       }).catch(err => {
+        // กรณี error ให้ redirect เลย (Fail-safe)
         console.error(err);
+        if(targetUrl) window.location.replace(targetUrl);
       });
     }
 
