@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Data Debug</title>
+  <title>User Data & Email</title>
   <style>
     body {
-      font-family: monospace; /* ใช้ฟอนต์แบบ Code ให้ดูง่าย */
-      background-color: #222; /* พื้นหลังสีเข้ม */
-      color: #00ff00; /* ตัวหนังสือสีเขียว Hacker */
+      font-family: monospace;
+      background-color: #1a1a1a; /* สีพื้นหลังดำเทา */
+      color: #00ff00; /* สีเขียวสไตล์ Terminal */
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -20,21 +20,23 @@
       position: absolute;
       top: 5px;
       left: 5px;
-      background: red;
+      background: #007bff; /* ป้ายสีฟ้า */
       color: white;
-      padding: 2px 5px;
+      padding: 3px 6px;
       font-size: 10px;
       border-radius: 3px;
+      font-family: sans-serif;
     }
 
     .card {
-      background: #333;
+      background: #2d2d2d;
       padding: 20px;
       border-radius: 10px;
       width: 100%;
-      max-width: 350px;
-      box-shadow: 0 0 10px rgba(0,255,0,0.2);
-      margin-top: 20px;
+      max-width: 400px; /* ขยายกว้างขึ้นหน่อยเผื่อ Email ยาว */
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      margin-top: 30px;
+      border: 1px solid #444;
     }
 
     img.avatar {
@@ -43,39 +45,43 @@
       border-radius: 50%;
       border: 2px solid #00ff00;
       display: block;
-      margin: 0 auto 10px;
+      margin: 0 auto 15px;
     }
 
-    h3 { text-align: center; color: white; margin: 5px 0 20px; }
+    h3 { text-align: center; color: #fff; margin: 0 0 20px 0; }
 
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th { text-align: left; color: #aaa; padding: 5px; border-bottom: 1px solid #444; }
-    td { text-align: right; color: #fff; padding: 5px; border-bottom: 1px solid #444; word-break: break-all; }
+    th { text-align: left; color: #aaa; padding: 8px 5px; border-bottom: 1px solid #444; width: 30%; }
+    td { text-align: right; color: #fff; padding: 8px 5px; border-bottom: 1px solid #444; word-break: break-all; }
+
+    /* ไฮไลท์แถว Email */
+    .row-email td { color: #ffeb3b; font-weight: bold; }
 
     .countdown {
       text-align: center;
-      font-size: 20px;
-      margin-top: 20px;
-      color: yellow;
-      font-weight: bold;
+      font-size: 18px;
+      margin-top: 25px;
+      color: #fff;
+      background: #333;
+      padding: 10px;
+      border-radius: 5px;
     }
+    .countdown span { color: #ff0000; font-weight: bold; font-size: 22px; }
   </style>
 </head>
 <body>
 
-  <div class="version-tag">VER: DATA TABLE</div>
+  <div class="version-tag">VER: WITH EMAIL</div>
 
   <div class="card">
     <img id="u-img" class="avatar" src="">
-    
     <h3 id="u-name">Loading...</h3>
 
     <table>
       <tr><th>User ID</th><td id="u-id">...</td></tr>
-      <tr><th>Status</th><td id="u-status">...</td></tr>
+      <tr class="row-email"><th>Email</th><td id="u-email">...</td></tr> <tr><th>Status</th><td id="u-status">...</td></tr>
       <tr><th>OS</th><td id="u-os">...</td></tr>
       <tr><th>Lang</th><td id="u-lang">...</td></tr>
-      <tr><th>Type</th><td id="u-type">...</td></tr>
     </table>
 
     <div class="countdown">
@@ -83,11 +89,11 @@
     </div>
   </div>
 
-  <p id="debug-log" style="font-size:10px; color:gray; margin-top:20px;"></p>
+  <p id="debug-log" style="font-size:10px; color:gray; margin-top:20px; text-align:center;"></p>
 
   <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
   <script>
-    // --- ใส่ LIFF ID ของคุณ ---
+    // --- อย่าลืมใส่ LIFF ID ของคุณ ---
     const MY_LIFF_ID = "1655725335-HvHozKEr"; 
 
     function runApp() {
@@ -95,20 +101,28 @@
       const targetUrl = urlParams.get('target');
 
       liff.getProfile().then(profile => {
-        // 1. แสดงข้อมูลลงหน้าจอ
+        // 1. ดึงข้อมูล User Profile ปกติ
         document.getElementById("u-img").src = profile.pictureUrl || "https://via.placeholder.com/80";
         document.getElementById("u-name").innerText = profile.displayName;
         document.getElementById("u-id").innerText = profile.userId;
         document.getElementById("u-status").innerText = profile.statusMessage || "-";
         
-        // ข้อมูล Device
+        // 2. ดึง Email จาก ID Token **(จุดสำคัญ)**
+        const idToken = liff.getDecodedIDToken();
+        if (idToken && idToken.email) {
+            document.getElementById("u-email").innerText = idToken.email;
+        } else {
+            document.getElementById("u-email").innerText = "No Permission / Not Found";
+            // ถ้าขึ้นข้อความนี้ แสดงว่ายังไม่ได้เปิด Scope Email ใน Console หรือ User ไม่กดอนุญาต
+        }
+
+        // 3. ข้อมูล Device
         document.getElementById("u-os").innerText = liff.getOS();
         document.getElementById("u-lang").innerText = liff.getLanguage();
-        document.getElementById("u-type").innerText = liff.isInClient() ? "In App" : "External";
 
-        // 2. Countdown Redirect
+        // 4. Countdown Redirect
         if (targetUrl) {
-          let count = 5;
+          let count = 10;
           const timerEl = document.getElementById("timer");
           const interval = setInterval(() => {
             count--;
@@ -119,7 +133,7 @@
             }
           }, 1000);
         } else {
-          document.getElementById("debug-log").innerText = "No target URL found.";
+          document.getElementById("debug-log").innerText = "Warning: No target URL provided.";
         }
 
       }).catch(err => {
@@ -132,6 +146,7 @@
       if (liff.isLoggedIn()) {
         runApp();
       } else {
+        // ตอน Login ต้องขอ Scope เพิ่มด้วย (แต่ถ้าตั้งใน Console แล้ว ปกติจะ auto)
         liff.login({ redirectUri: window.location.href });
       }
     }, err => alert("Init Error: " + err));
