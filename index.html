@@ -189,8 +189,7 @@
     // --- Auto Login Logic ---
     // เพิ่ม withLoginOnExternalBrowser: true เข้าไปที่นี่
     liff.init({ 
-      liffId: MY_LIFF_ID,
-      withLoginOnExternalBrowser: true 
+      liffId: MY_LIFF_ID
     }).then(() => {
       // แม้จะใส่ option ข้างบนแล้ว ก็ควรใส่ check นี้ไว้เป็น fallback
       if (!liff.isLoggedIn()) {
