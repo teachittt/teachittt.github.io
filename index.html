@@ -124,7 +124,8 @@
     </div>
   </main>
 
-  <script src="https://static.line-scdn.net/liff/edge/versions/2.9.0/sdk.js"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  
   <script>
     const MY_LIFF_ID = "1655725335-HvHozKEr"; // ใส่ LIFF ID ของคุณ
 
@@ -186,7 +187,12 @@
     }
 
     // --- Auto Login Logic ---
-    liff.init({ liffId: MY_LIFF_ID }).then(() => {
+    // เพิ่ม withLoginOnExternalBrowser: true เข้าไปที่นี่
+    liff.init({ 
+      liffId: MY_LIFF_ID,
+      withLoginOnExternalBrowser: true 
+    }).then(() => {
+      // แม้จะใส่ option ข้างบนแล้ว ก็ควรใส่ check นี้ไว้เป็น fallback
       if (!liff.isLoggedIn()) {
         liff.login({ redirectUri: window.location.href });
       } else {
