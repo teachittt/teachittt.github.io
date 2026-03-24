@@ -30,7 +30,7 @@
 
     /* Container */
     main.container {
-      display: none; /* ซ่อนก่อน รอ Auto Login เสร็จ */
+      display: none; /* ซ่อนก่อน รอ Auto Login หรือ Error */
       background: var(--card-bg);
       width: 100%;
       max-width: 380px;
@@ -65,9 +65,8 @@
     .value { font-weight: 500; text-align: right; max-width: 60%; word-break: break-all; }
     .value.highlight { color: var(--accent-color); }
 
-    /* Footer / Countdown */
+    /* Footer */
     .footer-info { margin-top: 20px; font-size: 14px; color: var(--text-secondary); }
-    .timer { color: var(--accent-color); font-weight: 700; font-size: 18px; }
 
     /* Loader เต็มจอ */
     .initial-loader {
@@ -119,9 +118,8 @@
       </div>
     </div>
 
-    <div class="footer-info">
-      Redirecting in <span id="timer" class="timer">5</span> s
-    </div>
+    <div class="footer-info" id="footer-msg">
+      </div>
   </main>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -129,28 +127,39 @@
   <script>
     const MY_LIFF_ID = "1655725335-HvHozKEr"; // ใส่ LIFF ID ของคุณ
 
-    function runApp() {
+    async function runApp() {
       const urlParams = new URLSearchParams(window.location.search);
       const targetUrl = urlParams.get('target');
 
-      liff.getProfile().then(profile => {
-        // 1. ใส่ข้อมูล Profile พื้นฐาน
+      try {
+        // 1. ดึงข้อมูล Profile ให้เรียบร้อยเพื่อยืนยันตัวตน
+        const profile = await liff.getProfile();
+
+        // 2. เช็ค Target URL และ Redirect ทันที
+        if (targetUrl && targetUrl.startsWith('http')) {
+          window.location.replace(targetUrl);
+          return; // จบการทำงานตรงนี้เลย จะได้ไม่โหลดหน้า UI ขึ้นมา
+        }
+
+        // --- ส่วนด้านล่างนี้จะทำงานก็ต่อเมื่อ ไม่มี target หรือ target ไม่ถูกต้อง ---
+        
+        // ใส่ข้อมูล Profile พื้นฐาน
         document.getElementById("u-img").src = profile.pictureUrl || "https://via.placeholder.com/88";
         document.getElementById("u-name").innerText = profile.displayName;
         document.getElementById("u-status").innerText = profile.statusMessage || "(No status message)";
         document.getElementById("u-id").innerText = profile.userId;
 
-        // 2. ใส่ข้อมูล System / OS / Version
-        const os = liff.getOS(); // ios, android, web
-        const lang = liff.getLanguage(); // th, en-US
-        const ver = liff.getVersion(); // liff sdk version
+        // ใส่ข้อมูล System / OS / Version
+        const os = liff.getOS();
+        const lang = liff.getLanguage();
+        const ver = liff.getVersion();
         const client = liff.isInClient() ? "In App" : "External";
 
         document.getElementById("u-os").innerText = `${os} (${client})`;
         document.getElementById("u-lang").innerText = lang;
         document.getElementById("u-version").innerText = ver;
 
-        // 3. ใส่ข้อมูล Email (ต้องเปิด Scope 'email' ใน Console)
+        // ใส่ข้อมูล Email
         const idToken = liff.getDecodedIDToken();
         const emailEl = document.getElementById("u-email");
         if (idToken && idToken.email) {
@@ -160,45 +169,29 @@
           emailEl.style.color = "#999";
         }
 
-        // 4. แสดงผล (ปิด Loader -> เปิด Card)
+        // แสดงผลหน้า UI (ปิด Loader -> เปิด Card)
         document.getElementById("full-loader").style.display = "none";
         document.getElementById("main-card").style.display = "block";
+        document.getElementById("footer-msg").innerHTML = "<b style='color:#ff3b30;'>Error: Target URL not found or invalid</b>";
 
-        // 5. นับถอยหลัง Redirect
-        if (targetUrl) {
-          let count = 0.1; //5
-          const timerEl = document.getElementById("timer");
-          const interval = setInterval(() => {
-            count--;
-            timerEl.innerText = count;
-            if (count <= 0) {
-              clearInterval(interval);
-              window.location.replace(targetUrl);
-            }
-          }, 1000);
-        } else {
-           document.querySelector(".footer-info").innerHTML = "<span style='color:red'>Target URL not found</span>";
-        }
-
-      }).catch(err => {
+      } catch (err) {
         console.error(err);
         alert("Error Loading Profile: " + err);
-      });
+      }
     }
 
     // --- Auto Login Logic ---
-    // เพิ่ม withLoginOnExternalBrowser: true เข้าไปที่นี่
     liff.init({ 
-      liffId: MY_LIFF_ID
+      liffId: MY_LIFF_ID,
+      withLoginOnExternalBrowser: true // ให้ Login อัตโนมัติเวลาเปิดบนเบราว์เซอร์ภายนอก
     }).then(() => {
-      // แม้จะใส่ option ข้างบนแล้ว ก็ควรใส่ check นี้ไว้เป็น fallback
       if (!liff.isLoggedIn()) {
         liff.login({ redirectUri: window.location.href });
       } else {
         runApp();
       }
     }).catch(err => {
-      document.body.innerHTML = "<h3>LIFF Init Failed</h3><p>" + err + "</p>";
+      document.body.innerHTML = "<div style='text-align:center; padding: 20px;'><h3>LIFF Init Failed</h3><p style='color:red;'>" + err + "</p></div>";
     });
   </script>
 </body>
