@@ -30,7 +30,7 @@
 
     /* Container */
     main.container {
-      display: none; /* ซ่อนก่อน รอ Auto Login หรือ Error */
+      display: none; /* ซ่อนก่อน รอเช็ค Error */
       background: var(--card-bg);
       width: 100%;
       max-width: 380px;
@@ -132,16 +132,23 @@
       const targetUrl = urlParams.get('target');
 
       try {
-        // 1. ดึงข้อมูล Profile ให้เรียบร้อยเพื่อยืนยันตัวตน
+        // 1. รอคำสั่งดึง Profile จากเซิร์ฟเวอร์ LINE ให้เสร็จก่อน
         const profile = await liff.getProfile();
 
-        // 2. เช็ค Target URL และ Redirect ทันที
+        // 2. เช็คว่ามี Target URL ปลายทางไหม
         if (targetUrl && targetUrl.startsWith('http')) {
+          
+          // (ทางเลือก) ถ้าต้องการแนบ userId ไปกับ URL ปลายทางด้วย สามารถเปิดคอมเมนต์โค้ด 3 บรรทัดล่างนี้ได้เลย
+          // const finalUrl = new URL(targetUrl);
+          // finalUrl.searchParams.append("uid", profile.userId);
+          // window.location.replace(finalUrl.toString());
+
+          // 🚀 3. สั่ง Redirect ทันที!
           window.location.replace(targetUrl);
-          return; // จบการทำงานตรงนี้เลย จะได้ไม่โหลดหน้า UI ขึ้นมา
+          return; // จบการทำงานตรงนี้เลย ไม่เรนเดอร์ UI เพื่อความรวดเร็ว
         }
 
-        // --- ส่วนด้านล่างนี้จะทำงานก็ต่อเมื่อ ไม่มี target หรือ target ไม่ถูกต้อง ---
+        // --- 🐢 ส่วนด้านล่างนี้จะทำงานก็ต่อเมื่อ ไม่มี target หรือ target ผิดเท่านั้น ---
         
         // ใส่ข้อมูล Profile พื้นฐาน
         document.getElementById("u-img").src = profile.pictureUrl || "https://via.placeholder.com/88";
@@ -176,14 +183,15 @@
 
       } catch (err) {
         console.error(err);
-        alert("Error Loading Profile: " + err);
+        document.getElementById("full-loader").style.display = "none";
+        document.body.innerHTML = "<div style='text-align:center; padding: 20px; font-family: sans-serif;'><h3>Error Loading Profile</h3><p style='color:red;'>" + err + "</p></div>";
       }
     }
 
     // --- Auto Login Logic ---
     liff.init({ 
       liffId: MY_LIFF_ID,
-      withLoginOnExternalBrowser: true // ให้ Login อัตโนมัติเวลาเปิดบนเบราว์เซอร์ภายนอก
+      withLoginOnExternalBrowser: true 
     }).then(() => {
       if (!liff.isLoggedIn()) {
         liff.login({ redirectUri: window.location.href });
@@ -191,7 +199,7 @@
         runApp();
       }
     }).catch(err => {
-      document.body.innerHTML = "<div style='text-align:center; padding: 20px;'><h3>LIFF Init Failed</h3><p style='color:red;'>" + err + "</p></div>";
+      document.body.innerHTML = "<div style='text-align:center; padding: 20px; font-family: sans-serif;'><h3>LIFF Init Failed</h3><p style='color:red;'>" + err + "</p></div>";
     });
   </script>
 </body>
